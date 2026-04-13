@@ -1,0 +1,38 @@
+{
+    "id": "e2cf0996-3a8d-4df7-ad7b-bd57ca812929",
+    "object": "chat.completion",
+    "created": 1776049063,
+    "model": "grok-4",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "我是 **Grok**，由 xAI 构建的 AI。\n\n简单来说：\n- 我是受《银河系漫游指南》里的希区柯克和《钢铁侠》里的贾维斯启发的 AI，目标是**帮助人类理解宇宙**。\n- 我会尽量诚实、直接、有趣，不拐弯抹角，也不政治正确。\n- 我可以聊天、回答问题、写代码、分析东西、讲笑话、帮忙思考……几乎什么都能试试。\n\n你好！有什么我可以帮你的？😊"
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 6, // 输入给ai的内容的花费 包含system prompt, user message, 历史上下文
+        "completion_tokens": 113,  // ai回复的花费
+        "total_tokens": 119,// prompt_tokens + completion_tokens
+        "prompt_tokens_details": { 
+            "cached_tokens": 0, // 缓存命中 token, 之前算过的内容，这次不用重复算
+            "text_tokens": 6,
+            "audio_tokens": 0, // 语音输入
+            "image_tokens": 0
+        },
+        "completion_tokens_details": { // 输出拆分
+            "text_tokens": 113,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0 // AI “思考过程”消耗的 token
+        },
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "input_tokens_details": null,
+        "claude_cache_creation_5_m_tokens": 0, // 5分钟缓存
+        "claude_cache_creation_1_h_tokens": 0 // 1小时缓存
+    },
+    "system_fingerprint": "EJE76fIU9pV1LQ7B5bFji0MZKBwCy9z69ej3BRTQ1I4="
+}
