@@ -40,10 +40,12 @@ export default function ChatPage() {
 
       nextLine = nextLine.replace(/^(#{1,6})([^\s#])/, "$1 $2"); // 标题 ### 前面加空格
       nextLine = nextLine.replace(/^(\s*)-(?!\s)/, "$1- "); // 修复 -标题 -> - 标题   \s* = “0个或多个空白字符”  ?!\s = 判断不是空格
+      nextLine = nextLine.replace(/^(-\s+)([^\n：:]+)([：:])(\s+)([-*+]|\d+\.)\s+(.+)$/, "$1$2$3\n    $5 $6"); // - 标题： - 子项 这种同行写法拆成父项 + 子项
       nextLine = nextLine.replace(/^(-\s+[^：:]+[：:])(\S)/, "$1\n$2"); // - 到冒号为止 后面换行
 
       const trimmedLine = nextLine.trimStart(); // 只去掉左边空格
       const isBulletLine = /^-\s+/.test(trimmedLine);
+      const isBoldSectionBullet = /^-\s+\*\*[^*]+\*\*(?:（[^）]*）)?[：:]?\s*$/.test(trimmedLine);
       const previousLine = formattedLines.at(-1)?.trimEnd() ?? "";
       const previousIsColonListItem =
         /^\s*(?:-|\*|\+|\d+\.)\s+/.test(previousLine) && /[：:]\s*$/.test(previousLine);
@@ -57,8 +59,11 @@ export default function ChatPage() {
       if (isBulletLine) {
         const normalizedBulletLine = trimmedLine;
 
-        if (shouldIndentNestedBullet || previousIsColonListItem) {
-          formattedLines.push(`  ${normalizedBulletLine}`);
+        if (isBoldSectionBullet) {
+          formattedLines.push(normalizedBulletLine);
+          shouldIndentNestedBullet = true;
+        } else if (shouldIndentNestedBullet || previousIsColonListItem) {
+          formattedLines.push(`    ${normalizedBulletLine}`);
           shouldIndentNestedBullet = true;
         } else {
           formattedLines.push(normalizedBulletLine);
