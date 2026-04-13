@@ -18,3 +18,22 @@ export function chatCompletionsRequest(model = "grok-4", messages) {
   })
 }
 
+export async function chatStreamRequest(model: string, messages: any[]) {
+  const res = await fetch(
+    `${import.meta.env.VITE_OPENAI_API_BASE_URL}/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: true,
+      }),
+    }
+  )
+
+  return res.body;
+}

@@ -1,7 +1,7 @@
 import { DownOutlined } from '@ant-design/icons';
 import { Dropdown, Space } from 'antd';
 import { useEffect, useState } from "react";
-import { getModelsRequest } from "../../api/chat.ts"; 
+import { getModelsRequest } from "@/api/chat.ts"; 
 
 type Props = {
   value: string;

@@ -1,4 +1,4 @@
-import ChatPage from "./pages/ChatPage";
+import ChatPage from "./pages/ChatPage/ChatPage";
 
 export default function App() {
   return (

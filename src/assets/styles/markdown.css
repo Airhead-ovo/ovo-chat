@@ -1,0 +1,57 @@
+/* markdown.css */
+.markdown {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #222;
+}
+
+.markdown p {
+  margin: 6px 0;
+  text-align: left;
+}
+
+.markdown h1, h2, h3, h4, h5, h6 {
+  text-align: left;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  margin: 12px 0;
+  font-weight: 600;
+}
+
+
+.markdown code {
+  background: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.markdown pre {
+  background: #111;
+  color: #eee;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown ul {
+  padding-left: 18px;
+}
+.markdown li {
+  margin: 4px 0;
+  text-align: left;
+}
+
+.markdown a {
+  color: #1677ff;
+}
+
+.markdown think{
+  color: #1677ff;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #f5f5f5;
+  font-size: 12px;
+}
