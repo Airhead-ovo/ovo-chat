@@ -1,0 +1,30 @@
+.page { width: 100%; height: 100%; overflow-y: auto; box-sizing: border-box; padding: 30px 28px 48px; text-align: left; background: #f7f8fb; color: #202631; }
+.heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 0 0 24px; }
+.heading h1 { margin: 0 0 5px; color: #1d2530; font-size: 27px; line-height: 1.25; font-weight: 650; letter-spacing: -.5px; }
+.heading p { margin: 0; color: #8992a0; font-size: 13px; }
+.projectCount { color: #8992a0; font-size: 13px; white-space: nowrap; }
+.layout { display: grid; grid-template-columns: minmax(235px, 290px) minmax(0, 1fr); align-items: start; gap: 18px; }
+.sidebar, .tasks { min-width: 0; border: 1px solid #e9edf3; border-radius: 12px; box-shadow: 0 3px 14px rgba(29, 42, 65, .035); }
+.sidebar :global(.ant-card-head), .tasks :global(.ant-card-head) { min-height: 58px; padding: 0 18px; border-bottom-color: #eef1f5; }
+.sidebar :global(.ant-card-head-title), .tasks :global(.ant-card-head-title) { font-size: 15px; font-weight: 650; }
+.sidebar :global(.ant-card-body) { padding: 8px; }
+.tasks :global(.ant-card-body) { padding: 8px 18px 14px; }
+.taskCount { color: #9ba3af; font-size: 12px; font-weight: 400; }
+.sidebar :global(.ant-list-item) { cursor: pointer; margin: 3px 0; padding: 11px 10px; border: 0; border-radius: 8px; transition: background .15s ease; }
+.sidebar :global(.ant-list-item:hover) { background: #f6f8fc; }
+.sidebar :global(.ant-list-item-meta) { min-width: 0; align-items: center; }
+.sidebar :global(.ant-list-item-meta-title) { margin-bottom: 1px; font-size: 14px; font-weight: 600; color: #2d3643; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar :global(.ant-list-item-meta-description) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #a0a8b4; }
+.sidebar :global(.ant-list-item-action) { margin-left: 6px; display: flex; gap: 0; }
+.sidebar :global(.ant-list-item-action > li) { padding: 0; }
+.sidebar :global(.ant-list-item-action-split) { display: none; }
+.sidebar :global(.ant-list-item-action .ant-btn) { padding-inline: 5px; font-size: 12px; }
+.sidebar .activeProject, .sidebar .activeProject:hover { background: #edf4ff; }
+.sidebar .activeProject :global(.ant-list-item-meta-title) { color: #1768dd; }
+.tasks :global(.ant-table-thead > tr > th) { background: #fff; color: #8993a0; font-size: 12px; font-weight: 500; border-bottom-color: #edf0f4; padding: 13px 10px; }
+.tasks :global(.ant-table-tbody > tr > td) { padding: 15px 10px; border-bottom-color: #f0f2f5; font-size: 13px; }
+.tasks :global(.ant-table-pagination) { margin: 14px 0 0; }
+.tasks :global(.ant-btn-link) { padding-inline: 4px; font-size: 12px; }
+.taskTitle { font-weight: 600; color: #2d3643; }
+.description { color: #a0a8b4; font-size: 12px; font-weight: normal; margin-top: 3px; white-space: pre-wrap; }
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .page { padding: 20px 12px 32px; } .heading h1 { font-size: 23px; } }

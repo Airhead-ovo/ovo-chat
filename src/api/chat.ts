@@ -1,39 +1,31 @@
-import { request } from "./request.ts";
+import { request, requestResponse } from "./request";
+import { readSSE, type SSEMessage } from "../utils/sse";
+export type Conversation = { id: number; title: string; user_id: number };
+export type ChatMessage = {
+  id: number; role: string; content: string; conversation_id: number;
+};
+export const login = (email: string, password: string) =>
+  request<{ access_token: string; token_type: string }>("/auth/login", {
+    method: "POST", body: JSON.stringify({ email, password }),
+  });
+export const createConversation = (title: string) =>
+  request<Conversation>(`/conversations?title=${encodeURIComponent(title)}`, { method: "POST" });
+export const getConversations = (signal?: AbortSignal) =>
+  request<Conversation[]>("/conversations", { signal });
+export const getConversationMessages = (id: number, signal?: AbortSignal) =>
+  request<ChatMessage[]>(`/conversations/${id}/messages`, { signal });
+export const sendMessageRequest = (id: number, content: string, signal?: AbortSignal) =>
+  request<ChatMessage>(`/conversations/${id}/messages`, {
+    method: "POST", body: JSON.stringify({ content }), signal,
+  });
 
-// 获取可用模型
-export function getModelsRequest() {
-  return request<ModelsResponse>("/models", {
-    method: "GET",
-  })
-}
-
-export function chatCompletionsRequest(model = "grok-4", messages) {
-  return request<ChatResponse>("/chat/completions", {
-    method: "POST",
-    body: JSON.stringify({
-      model,
-      messages,
-      stream: false,
-    })
-  })
-}
-
-export async function chatStreamRequest(model: string, messages: any[]) {
-  const res = await fetch(
-    `${import.meta.env.VITE_OPENAI_API_BASE_URL}/chat/completions`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: true,
-      }),
-    }
-  )
-
-  return res.body;
+export async function streamMessageRequest(id: number, content: string, onMessage: (message: SSEMessage) => void, signal?: AbortSignal) {
+  const response = await requestResponse(`/conversations/${id}/messages/stream`, {
+    method: "POST", body: JSON.stringify({ content }), signal,
+    headers: { Accept: "text/event-stream" },
+  });
+  if (!response.headers.get("content-type")?.includes("text/event-stream") || !response.body) {
+    throw new Error("后端未返回 SSE 文本流");
+  }
+  await readSSE(response.body, onMessage);
 }

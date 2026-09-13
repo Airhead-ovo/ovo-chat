@@ -1,65 +1,20 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Dropdown, Space } from 'antd';
-import { useEffect, useState } from "react";
-import { getModelsRequest } from "@/api/chat.ts"; 
-
+import { Button, Select, Space } from "antd";
+import type { Conversation } from "@/api/chat";
 type Props = {
-  value: string;
-  onModelChange: (value: string) => void;
-}
-
-type ModelItem = {
-  key: string;
-  label: string;
-}
-
-const ChatHeader = ({ value, onModelChange }: Props) => {
-  const [modelList, setModelList] = useState<ModelItem[]>([]);
-
-  useEffect(() => { // 组件渲染后的钩子 == onMounted()
-    const getModels = async () => {
-      try {
-        const res = await getModelsRequest();
-        setModelList(res.data.map((item: any) => ({ key: item.id, label: item.id })));
-      } catch (error) {
-        console.error("获取模型失败:", error);
-      }
-    }
-    getModels();
-  }, []); // 只执行一次;   useEffect(() => {}, [value]) -> value变了就执行
-  
-
-  return (
-    <div style={styles.chatHeaderContainer}>
-      <div style={styles.leftContainer}>
-        <Dropdown menu={{ items: modelList, onClick: ({key}) => { onModelChange(key) } }} trigger={["click"]}>
-          <div style={{ cursor: "pointer" }}>
-            <Space>
-              <span>{value}</span>
-              <DownOutlined />
-            </Space>
-          </div>
-        </Dropdown>
-      </div>
-      <div style={styles.rightContainer}></div>
-    </div>
-  )
-}
-export default ChatHeader;
-
-const styles: Record<string, any> = {
-  chatHeaderContainer: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "10px",
-  },
-  leftContainer: {
-    width: "200px",
-    height: "100%",
-  },
-  rightContainer: {
-    width: "200px",
-    height: "100%",
-  }
+  conversations: Conversation[]; selected: number | null; disabled: boolean;
+  onSelect: (id: number) => void; onNew: () => void; onLogout: () => void;
+};
+export default function ChatHeader(props: Props) {
+  return <header style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 16px", alignItems: "center" }}>
+    <strong>OvO Chat</strong>
+    <span style={{ color: "#888", fontSize: 12 }}>流式智能体</span>
+    <Select aria-label="选择会话" placeholder="选择会话" style={{ minWidth: 200, flex: 1 }}
+      value={props.selected ?? undefined} disabled={props.disabled}
+      options={props.conversations.map(item => ({ value: item.id, label: item.title }))}
+      onChange={props.onSelect} />
+    <Space>
+      <Button onClick={props.onNew} disabled={props.disabled}>新建对话</Button>
+      <Button onClick={props.onLogout} disabled={props.disabled}>退出登录</Button>
+    </Space>
+  </header>;
 }

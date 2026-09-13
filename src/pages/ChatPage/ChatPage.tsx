@@ -1,220 +1,108 @@
-import { useRef, useState } from "react";
-import { LoadingOutlined } from "@ant-design/icons";
-import { Spin } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Button, Empty, Input, Modal, Spin } from "antd";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ChatHeader from "@/components/chat/ChatHeader";
 import ChatInput from "@/components/chat/ChatInput";
-import { useChatMessages, type Message } from "@/hooks/useChatMessages";
-import { formatTime } from "@/utils/time";
+import { createConversation, getConversations, type Conversation } from "@/api/chat";
+import { useChatMessages } from "@/hooks/useChatMessages";
 import "@/assets/styles/markdown.css";
 import styles from "./ChatPage.module.css";
 
-type RenderPart =
-  | { type: "think"; content: string }
-  | { type: "text"; content: string };
+export default function ChatPage({ onLogout }: { onLogout: () => void }) {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [createError, setCreateError] = useState("");
+  const { messages, isLoading, historyLoading, activity, error: chatError, sendMessage } = useChatMessages(selected);
+  const bottom = useRef<HTMLDivElement>(null);
+  const creating = useRef(false);
 
-export default function ChatPage() {
-  const [model, setModel] = useState("grok-4");
-  const { messages, isLoading, sendMessage } = useChatMessages(model);
-  const inputRef = useRef<{ clearInput: () => void } | null>(null);
-
-  const handleSend = async (data: { content: string; image?: string }) => {
-    await sendMessage(data);
-    inputRef.current?.clearInput();
-  }
-
-  const formatMarkdown = (text: string) => {
-    const normalizedText = text
-      .replace(/\r\n/g, "\n") // 把 Windows 换行 \r\n → 统一成 \n
-      .replace(/([^\n])(#{1,6}\s*)/g, "$1\n\n$2") // 强制让标题 ### 前面换行
-      .replace(/([。！？：:])\s*(#{1,6}\s+)/g, "$1\n\n$2") // 标点符号后面接标题 → 强制换行
-      .replace(/([。！？：:])\s*(-\s*)/g, "$1\n$2") // 标点符号后接列表 - → 换行
-      .replace(/([。！？：:])\s*(\d+\.\s+)/g, "$1\n$2"); // 标点符号后接有序列表 1. → 换行
-
-    const lines = normalizedText.split("\n"); // 变成数组
-    const formattedLines: string[] = [];
-    let shouldIndentNestedBullet = false;
-
-    for (const rawLine of lines) {
-      let nextLine = rawLine.trimEnd(); // 去掉行尾空格
-
-      nextLine = nextLine.replace(/^(#{1,6})([^\s#])/, "$1 $2"); // 标题 ### 前面加空格
-      nextLine = nextLine.replace(/^(\s*)-(?!\s)/, "$1- "); // 修复 -标题 -> - 标题   \s* = “0个或多个空白字符”  ?!\s = 判断不是空格
-      nextLine = nextLine.replace(/^(-\s+)([^\n：:]+)([：:])(\s+)([-*+]|\d+\.)\s+(.+)$/, "$1$2$3\n    $5 $6"); // - 标题： - 子项 这种同行写法拆成父项 + 子项
-      nextLine = nextLine.replace(/^(-\s+[^：:]+[：:])(\S)/, "$1\n$2"); // - 到冒号为止 后面换行
-
-      const trimmedLine = nextLine.trimStart(); // 只去掉左边空格
-      const isBulletLine = /^-\s+/.test(trimmedLine);
-      const isBoldSectionBullet = /^-\s+\*\*[^*]+\*\*(?:（[^）]*）)?[：:]?\s*$/.test(trimmedLine);
-      const previousLine = formattedLines.at(-1)?.trimEnd() ?? "";
-      const previousIsColonListItem =
-        /^\s*(?:-|\*|\+|\d+\.)\s+/.test(previousLine) && /[：:]\s*$/.test(previousLine);
-
-      if (!trimmedLine) {
-        shouldIndentNestedBullet = false;
-        formattedLines.push("");
-        continue;
-      }
-
-      if (isBulletLine) {
-        const normalizedBulletLine = trimmedLine;
-
-        if (isBoldSectionBullet) {
-          formattedLines.push(normalizedBulletLine);
-          shouldIndentNestedBullet = true;
-        } else if (shouldIndentNestedBullet || previousIsColonListItem) {
-          formattedLines.push(`    ${normalizedBulletLine}`);
-          shouldIndentNestedBullet = true;
-        } else {
-          formattedLines.push(normalizedBulletLine);
-          shouldIndentNestedBullet = false;
-        }
-
-        continue;
-      }
-
-      shouldIndentNestedBullet = false;
-      formattedLines.push(nextLine);
-    }
-
-    return formattedLines.join("\n").replace(/\n{3,}/g, "\n\n");
-  }
-
-
-  const parseMessageParts = (text: string): RenderPart[] => {
-    const parts: RenderPart[] = [];
-    const regex = /<think>([\s\S]*?)<\/think>/g;
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push({
-          type: "text",
-          content: text.slice(lastIndex, match.index),
-        })
-      }
-
-      parts.push({
-        type: "think",
-        content: match[1].trim(),
+  useEffect(() => {
+    const controller = new AbortController();
+    setListLoading(true);
+    setListError("");
+    getConversations(controller.signal)
+      .then(items => {
+        if (controller.signal.aborted) return;
+        setConversations(items);
+        setSelected(previous => items.some(item => item.id === previous)
+          ? previous : items[0]?.id ?? null);
       })
-
-      lastIndex = regex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push({
-        type: "text",
-        content: text.slice(lastIndex),
+      .catch(err => {
+        if (!controller.signal.aborted) setListError(err instanceof Error ? err.message : "读取会话失败");
       })
+      .finally(() => {
+        if (!controller.signal.aborted) setListLoading(false);
+      });
+    return () => controller.abort();
+  }, [revision]);
+
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading]);
+
+  const newConversation = async () => {
+    const title = newTitle.trim();
+    if (creating.current || !title) return;
+    creating.current = true;
+    setListLoading(true);
+    setListError("");
+    try {
+      const item = await createConversation(title);
+      setConversations(items => [item, ...items.filter(existing => existing.id !== item.id)]);
+      setSelected(item.id);
+      setNewDialogOpen(false);
+      setNewTitle("");
+      setCreateError("");
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : "创建会话失败");
+    } finally {
+      creating.current = false;
+      setListLoading(false);
     }
+  };
 
-    if (parts.length === 0) {
-      parts.push({ type: "text", content: text });
-    }
-
-    return parts;
-  }
-
-  const renderMessageContent = (msg: Message) => {
-    const parts = parseMessageParts(msg.content);
-    const isStreamingAssistant = msg.role === "assistant" && !msg.done;
-
-    return (
-      <div className="markdown">
-        {parts.map((part, index) => {
-          if (part.type === "think") {
-            return (
-              <details
-                key={`${msg.id}-think-${index}`}
-                className="thinkBlock"
-                open={isStreamingAssistant}
-              >
-                <summary className="thinkSummary">
-                  <span className="thinkLabel">已深度思考</span>
-                  {isStreamingAssistant && (
-                    <span className="thinkLoadingInline">
-                      <Spin indicator={<LoadingOutlined spin />} size="small" />
-                      <span>思考中</span>
-                    </span>
-                  )}
-                </summary>
-                <div className="thinkContent">{part.content}</div>
-              </details>
-            )
-          }
-
-          if (!part.content.trim()) return null;
-
-          return (
-            <ReactMarkdown key={`${msg.id}-text-${index}`}>
-              {formatMarkdown(part.content)}
-            </ReactMarkdown>
-          )
-        })}
-      </div>
-    )
-  }
-
-  const showStandaloneLoading =
-    isLoading &&
-    messages.length > 0 &&
-    messages[messages.length - 1]?.role === "assistant" &&
-    !messages[messages.length - 1]?.content;
-
-  return (
-    <div className={styles.chatPageContainer}>
-      <ChatHeader value={model} onModelChange={setModel} />
-
-      <div className={styles.chatBox}>
-        {/* 这一段等同于 
-        <div v-for="msg in messages">
-          {{ msg.content }}
-        </div> */}
-        {messages.map((msg: Message) => {
-          const isUser = msg.role === "user";
-
-          return (
-            <div
-              key={msg.id}
-              className={styles.msgContainer}
-              style={{ justifyContent: isUser ? "flex-end" : "flex-start" }}
-            >
-              <div className={styles.msgWrapper}>
-                <div
-                  className={styles.msgContent}
-                  style={{ background: isUser ? "#f3f3f3" : "#fff" }}
-                >
-                  {renderMessageContent(msg)}
-                </div>
-
-                {msg.role === "assistant" && msg.done && msg.usage && (
-                  <div className={styles.tokenInfo}>
-                    <div>
-                      {formatTime(msg.created)} &nbsp;&nbsp; {msg.model}
-                    </div>
-                    tokens: {msg.usage.total_tokens} &nbsp;&nbsp; (in: {msg.usage.prompt_tokens}, out: {msg.usage.completion_tokens})
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-
-        {showStandaloneLoading && (
-          <div className={styles.msgContainer} style={{ justifyContent: "flex-start" }}>
-            <div className={styles.msgWrapper}>
-              <div className={styles.loadingState}>
-                <Spin indicator={<LoadingOutlined spin />} size="small" />
-                <span>正在思考中…</span>
-              </div>
+  const disabled = listLoading || historyLoading || isLoading;
+  return <div className={styles.chatPageContainer}>
+    <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
+      onSelect={setSelected} onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
+    <Modal title="新建对话" open={newDialogOpen} onCancel={() => { if (!creating.current) setNewDialogOpen(false); }}
+      onOk={() => void newConversation()} okText="创建" okButtonProps={{ disabled: !newTitle.trim(), loading: creating.current }}
+      cancelButtonProps={{ disabled: creating.current }} destroyOnHidden>
+      <p style={{ marginBottom: 10 }}>给这段对话起个名字</p>
+      <Input autoFocus aria-label="对话名称" placeholder="例如：本周项目计划" maxLength={100}
+        value={newTitle} onChange={event => { setNewTitle(event.target.value); setCreateError(""); }}
+        onPressEnter={() => void newConversation()} />
+      {createError && <Alert type="error" title={createError} style={{ marginTop: 12 }} showIcon />}
+    </Modal>
+    {listError && <Alert type="error" title={listError}
+      action={<Button size="small" onClick={() => setRevision(value => value + 1)}>重试</Button>} />}
+    {chatError && <Alert type="error" title={chatError} />}
+    <div className={styles.chatBox}>
+      {(listLoading || historyLoading) && <Spin />}
+      {!listLoading && !historyLoading && !messages.length &&
+        <Empty description={selected === null ? "点击新建对话，开始聊天" : "这个会话还没有消息"} />}
+      {messages.map(message => <div key={message.id} className={styles.msgContainer}
+        style={{ justifyContent: message.role === "user" ? "flex-end" : "flex-start", textAlign: "left" }}>
+        <div className={styles.msgWrapper} style={{ maxWidth: "90%" }}>
+          <div className={styles.msgContent} style={{ background: message.role === "user" ? "#f3f3f3" : "#fff" }}>
+            <div className="markdown">
+              {message.content.split(/(<think>[\s\S]*?<\/think>)/g).map((part, index) =>
+                part.startsWith("<think>") ? <details key={index}>
+                  <summary>思考过程</summary><ReactMarkdown remarkPlugins={[remarkGfm]}>{part.slice(7, -8)}</ReactMarkdown>
+                </details> : <ReactMarkdown remarkPlugins={[remarkGfm]} key={index}>{part}</ReactMarkdown>
+              )}
             </div>
           </div>
-        )}
-      </div>
-
-      <ChatInput onSend={handleSend} ref={inputRef} disabled={isLoading} />
+        </div>
+      </div>)}
+      {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}</div>}
+      <div ref={bottom} />
     </div>
-  )
+    <ChatInput key={selected ?? "empty"} onSend={sendMessage}
+      disabled={selected === null || disabled} />
+  </div>;
 }
