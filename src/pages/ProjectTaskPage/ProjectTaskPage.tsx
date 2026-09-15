@@ -153,7 +153,7 @@ export default function ProjectTaskPage() {
 
   return <div className={styles.page}>
     {toastContext}
-    <div className={styles.heading}><div><h1>项目与任务</h1><p>把事情安排得井井有条。</p></div><span className={styles.projectCount}>{projects.length} 个项目</span></div>
+    <div className={styles.heading}><div><h1>项目与任务</h1></div><span className={styles.projectCount}>{projects.length} 个项目</span></div>
     <div className={styles.layout}>
       <Card className={styles.sidebar} title="我的项目" extra={<Button size="small" onClick={() => openProject("new")}>＋ 新建项目</Button>}>
         {projectError && <Alert type="error" title={projectError} action={<Button size="small" onClick={() => void loadProjects()}>重试</Button>} showIcon />}

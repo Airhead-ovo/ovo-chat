@@ -6,11 +6,14 @@ import { login } from "./api/chat";
 import { clearToken, getToken, setToken } from "./api/request";
 import styles from "./App.module.css";
 
+type Page = "chat" | "projects";
+const pageFromPath = (): Page => window.location.pathname === "/projects" ? "projects" : "chat";
+
 export default function App() {
   const [authenticated, setAuthenticated] = useState(() => Boolean(getToken()));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [page, setPage] = useState<"chat" | "projects">("chat");
+  const [page, setPage] = useState<Page>(pageFromPath);
   const logout = () => { clearToken(); setAuthenticated(false); };
   useEffect(() => {
     const expired = () => {
@@ -20,6 +23,16 @@ export default function App() {
     window.addEventListener("ovo-chat:unauthorized", expired);
     return () => window.removeEventListener("ovo-chat:unauthorized", expired);
   }, []);
+  useEffect(() => {
+    const handleHistory = () => setPage(pageFromPath());
+    window.addEventListener("popstate", handleHistory);
+    return () => window.removeEventListener("popstate", handleHistory);
+  }, []);
+  const navigate = (nextPage: Page) => {
+    const path = nextPage === "projects" ? "/projects" : "/chat";
+    if (window.location.pathname !== path) window.history.pushState(null, "", path);
+    setPage(nextPage);
+  };
   const submit = async ({ email, password }: { email: string; password: string }) => {
     setLoading(true); setError("");
     try {
@@ -30,8 +43,8 @@ export default function App() {
   };
   if (authenticated) return <div className={styles.shell}>
     <nav className={styles.navigation}>
-      <Button type={page === "chat" ? "primary" : "text"} onClick={() => setPage("chat")}>智能体对话</Button>
-      <Button type={page === "projects" ? "primary" : "text"} onClick={() => setPage("projects")}>项目与任务</Button>
+      <Button type={page === "chat" ? "primary" : "text"} onClick={() => navigate("chat")}>智能体对话</Button>
+      <Button type={page === "projects" ? "primary" : "text"} onClick={() => navigate("projects")}>项目与任务</Button>
       {page === "projects" && <Button style={{ marginLeft: "auto" }} onClick={logout}>退出登录</Button>}
     </nav>
     <main className={styles.main}>
