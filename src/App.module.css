@@ -29,6 +29,9 @@
 
 .navigation :global(.ant-btn-primary) { box-shadow: none; }
 .navigation :global(.ant-btn-text) { color: #687384; }
+.navigationSpacer { flex: 1; }
+.navigation :global(.profile-avatar) { transition: transform .15s ease, box-shadow .15s ease; }
+.navigation :global(.profile-avatar:hover) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(23, 104, 221, .18); }
 
 .main {
   height: 100%;

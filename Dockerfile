@@ -12,13 +12,9 @@ COPY . .
 RUN npm run build
 
 
-# ② ビルド結果を配信する
-FROM node:22-slim
+# ② NginxでReactを配信
+FROM nginx:alpine
 
-WORKDIR /app
+COPY --from=build /app/dist /usr/share/nginx/html
 
-RUN npm install -g serve
-
-COPY --from=build /app/dist ./dist
-
-CMD ["serve", "-s", "dist", "-l", "3000"]
+COPY nginx.conf /etc/nginx/conf.d/default.conf

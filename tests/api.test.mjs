@@ -13,6 +13,8 @@ const { readSSE } = await import(sseUrl);
 const chat = await import(compile(readFileSync(new URL("../src/api/chat.ts", import.meta.url), "utf8")
   .replace('from "./request"', 'from "' + requestUrl + '"')
   .replace('from "../utils/sse"', 'from "' + sseUrl + '"')));
+const user = await import(compile(readFileSync(new URL("../src/api/user.ts", import.meta.url), "utf8")
+  .replace('from "./request"', 'from "' + requestUrl + '"')));
 const storage = new Map();
 globalThis.sessionStorage = {
   getItem: key => storage.get(key) ?? null,
@@ -76,6 +78,20 @@ test("backend errors are surfaced, not parsed as SSE", async () => {
 test("network errors explain backend availability", async () => {
   globalThis.fetch = async () => { throw new TypeError("fetch failed"); };
   await assert.rejects(chat.createConversation("test"), /8000/);
+});
+
+test("avatar upload uses multipart form data without a JSON content type", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/file/users/avatar");
+    assert.equal(options.method, "POST");
+    assert.ok(options.body instanceof FormData);
+    assert.equal(options.headers.has("Content-Type"), false);
+    assert.equal(options.body.get("file").name, "avatar.png");
+    return Response.json({ filename: "avatar.png", content_type: "image/png", path: "uploads/avatar.png" });
+  };
+  const result = await user.uploadAvatar(new File(["image"], "avatar.png", { type: "image/png" }));
+  assert.equal(result.filename, "avatar.png");
+  assert.equal(user.avatarUrl("头像 1.png"), "/api/file/download/%E5%A4%B4%E5%83%8F%201.png");
 });
 
 function bytesStream(bytes, size = 1) {

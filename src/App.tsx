@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Card, Form, Input } from "antd";
 import ChatPage from "./pages/ChatPage/ChatPage";
 import ProjectTaskPage from "./pages/ProjectTaskPage/ProjectTaskPage";
+import ProfileAvatar from "./components/ProfileAvatar";
 import { login } from "./api/chat";
 import { clearToken, getToken, setToken } from "./api/request";
 import styles from "./App.module.css";
@@ -45,7 +46,9 @@ export default function App() {
     <nav className={styles.navigation}>
       <Button type={page === "chat" ? "primary" : "text"} onClick={() => navigate("chat")}>智能体对话</Button>
       <Button type={page === "projects" ? "primary" : "text"} onClick={() => navigate("projects")}>项目与任务</Button>
-      {page === "projects" && <Button style={{ marginLeft: "auto" }} onClick={logout}>退出登录</Button>}
+      <span className={styles.navigationSpacer} />
+      <ProfileAvatar />
+      {page === "projects" && <Button onClick={logout}>退出登录</Button>}
     </nav>
     <main className={styles.main}>
       <section className={`${styles.panel} ${page === "chat" ? styles.activePanel : ""}`} aria-hidden={page !== "chat"}>
