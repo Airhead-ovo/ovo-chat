@@ -35,7 +35,12 @@ export default function App() {
       {page === "projects" && <Button style={{ marginLeft: "auto" }} onClick={logout}>退出登录</Button>}
     </nav>
     <main className={styles.main}>
-      {page === "chat" ? <ChatPage onLogout={logout} /> : <ProjectTaskPage />}
+      <section className={`${styles.panel} ${page === "chat" ? styles.activePanel : ""}`} aria-hidden={page !== "chat"}>
+        <ChatPage onLogout={logout} />
+      </section>
+      <section className={`${styles.panel} ${page === "projects" ? styles.activePanel : ""}`} aria-hidden={page !== "projects"}>
+        <ProjectTaskPage />
+      </section>
     </main>
   </div>;
   return <Card title="OvO Chat · 登录" style={{ width: 400, maxWidth: "95%", margin: "12vh auto", textAlign: "left" }}>

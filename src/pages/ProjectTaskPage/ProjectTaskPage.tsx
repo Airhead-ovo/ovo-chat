@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Card, Empty, Form, Input, List, Modal, Popconfirm, Select, Space, Table, Tag, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { createProject, createTask, deleteProject, deleteTask, getProjects, getTasks, updateProject, updateTask, type Project, type Task, type TaskStatus } from "../../api/projects";
@@ -19,6 +19,9 @@ export default function ProjectTaskPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [searchText, setSearchText] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | undefined>();
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -29,6 +32,7 @@ export default function ProjectTaskPage() {
   const [projectForm] = Form.useForm<ProjectFields>();
   const [taskForm] = Form.useForm<TaskFields>();
   const [toast, toastContext] = message.useMessage();
+  const taskRequestId = useRef(0);
 
   const selectedProject = projects.find(item => item.id === selectedId);
 
@@ -51,26 +55,31 @@ export default function ProjectTaskPage() {
 
   useEffect(() => { void loadProjects(); }, []);
 
-  const loadTasks = async (projectId: number, currentPage: number) => {
+  const loadTasks = useCallback(async (projectId: number, currentPage: number, signal?: AbortSignal) => {
+    const requestId = ++taskRequestId.current;
     setTasksLoading(true);
     setTaskError("");
     try {
-      const result = await getTasks(projectId, currentPage);
+      const result = await getTasks(projectId, currentPage, 10, statusFilter, keyword, signal);
+      if (requestId !== taskRequestId.current || signal?.aborted) return;
       setTasks(result.items);
       setTotal(result.total);
     } catch (error) {
+      if (requestId !== taskRequestId.current || signal?.aborted) return;
       setTasks([]);
       setTotal(0);
       setTaskError(error instanceof Error ? error.message : "读取任务失败");
     } finally {
-      setTasksLoading(false);
+      if (requestId === taskRequestId.current && !signal?.aborted) setTasksLoading(false);
     }
-  };
+  }, [keyword, statusFilter]);
 
   useEffect(() => {
-    if (selectedId === null) { setTasks([]); setTotal(0); return; }
-    void loadTasks(selectedId, page);
-  }, [selectedId, page]);
+    const controller = new AbortController();
+    if (selectedId === null) { taskRequestId.current += 1; setTasks([]); setTotal(0); setTasksLoading(false); return () => controller.abort(); }
+    void loadTasks(selectedId, page, controller.signal);
+    return () => controller.abort();
+  }, [selectedId, page, loadTasks]);
 
   const openProject = (project: Project | "new") => {
     setProjectModal(project);
@@ -157,7 +166,16 @@ export default function ProjectTaskPage() {
       </Card>
       <Card className={styles.tasks} title={<span>{selectedProject?.name ?? "任务"}<span className={styles.taskCount}> / {total} 条任务</span></span>} extra={selectedId !== null && <Button type="primary" size="small" onClick={() => openTask("new")}>＋ 新建任务</Button>}>
         {taskError && <Alert type="error" title={taskError} action={<Button size="small" onClick={() => selectedId !== null && void loadTasks(selectedId, page)}>重试</Button>} showIcon />}
-        {selectedId === null ? <Empty description="选择或创建一个项目" /> : <Table rowKey="id" columns={columns} dataSource={tasks} loading={tasksLoading} scroll={{ x: 660 }} pagination={{ current: page, pageSize: 10, total, onChange: setPage, showTotal: count => `共 ${count} 条任务` }} />}
+        {selectedId === null ? <Empty description="选择或创建一个项目" /> : <>
+          <div className={styles.filters}>
+            <Input.Search allowClear placeholder="搜索任务标题或描述" value={searchText}
+              onChange={event => setSearchText(event.target.value)}
+              onSearch={value => { setKeyword(value.trim()); setPage(1); }} />
+            <Select allowClear placeholder="全部状态" value={statusFilter} options={statusOptions}
+              onChange={value => { setStatusFilter(value); setPage(1); }} />
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={tasks} loading={tasksLoading} scroll={{ x: 660 }} pagination={{ current: page, pageSize: 10, total, onChange: setPage, showTotal: count => `共 ${count} 条任务` }} />
+        </>}
       </Card>
     </div>
     <Modal title={projectModal === "new" ? "新建项目" : "编辑项目"} open={projectModal !== null} onCancel={() => setProjectModal(null)} onOk={() => void saveProject()} confirmLoading={saving} destroyOnHidden>

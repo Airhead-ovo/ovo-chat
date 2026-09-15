@@ -18,7 +18,8 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [createError, setCreateError] = useState("");
-  const { messages, isLoading, historyLoading, activity, error: chatError, sendMessage } = useChatMessages(selected);
+  const { messages, isLoading, historyLoading, activity, error: chatError, canRetry,
+    sendMessage, stopGeneration, retryLastMessage } = useChatMessages(selected);
   const bottom = useRef<HTMLDivElement>(null);
   const creating = useRef(false);
 
@@ -80,7 +81,8 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
     </Modal>
     {listError && <Alert type="error" title={listError}
       action={<Button size="small" onClick={() => setRevision(value => value + 1)}>重试</Button>} />}
-    {chatError && <Alert type="error" title={chatError} />}
+    {chatError && <Alert type="warning" title={chatError}
+      action={canRetry && <Button size="small" onClick={() => void retryLastMessage()}>重新生成</Button>} />}
     <div className={styles.chatBox}>
       {(listLoading || historyLoading) && <Spin />}
       {!listLoading && !historyLoading && !messages.length &&
@@ -99,7 +101,8 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
           </div>
         </div>
       </div>)}
-      {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}</div>}
+      {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}
+        <Button size="small" danger onClick={stopGeneration}>停止生成</Button></div>}
       <div ref={bottom} />
     </div>
     <ChatInput key={selected ?? "empty"} onSend={sendMessage}

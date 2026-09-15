@@ -6,8 +6,7 @@ type Props = {
 };
 export default function ChatHeader(props: Props) {
   return <header style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 16px", alignItems: "center" }}>
-    <strong>OvO Chat</strong>
-    <span style={{ color: "#888", fontSize: 12 }}>流式智能体</span>
+    <strong>Chat</strong>
     <Select aria-label="选择会话" placeholder="选择会话" style={{ minWidth: 200, flex: 1 }}
       value={props.selected ?? undefined} disabled={props.disabled}
       options={props.conversations.map(item => ({ value: item.id, label: item.title }))}

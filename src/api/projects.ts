@@ -34,8 +34,13 @@ export const updateProject = (id: number, data: { name?: string; description?: s
 export const deleteProject = (id: number) =>
   requestResponse(`/projects/${id}`, { method: "DELETE" });
 
-export const getTasks = (projectId: number, page = 1, pageSize = 10) =>
-  request<TaskList>(`/projects/${projectId}/tasks?page=${page}&page_size=${pageSize}`);
+export const getTasks = (projectId: number, page = 1, pageSize = 10,
+  status?: TaskStatus, keyword?: string, signal?: AbortSignal) => {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  if (status) params.set("status", status);
+  if (keyword) params.set("keyword", keyword);
+  return request<TaskList>(`/projects/${projectId}/tasks?${params}`, { signal });
+};
 export const createTask = (projectId: number, data: { title: string; description?: string }) =>
   request<Task>(`/projects/${projectId}/tasks`, { method: "POST", body: JSON.stringify(data) });
 export const updateTask = (projectId: number, taskId: number, data: { title?: string; description?: string; status?: TaskStatus }) =>

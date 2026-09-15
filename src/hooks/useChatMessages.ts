@@ -7,6 +7,7 @@ export function useChatMessages(conversationId: number | null) {
   const [isLoading, setIsLoading] = useState(false);
   const [activity, setActivity] = useState("");
   const [error, setError] = useState("");
+  const [lastPrompt, setLastPrompt] = useState("");
   const busy = useRef(false), controllerRef = useRef<AbortController | null>(null);
   const loadHistory = async (id: number, signal?: AbortSignal) => {
     const messages = await getConversationMessages(id, signal);
@@ -24,7 +25,7 @@ export function useChatMessages(conversationId: number | null) {
   useEffect(() => () => controllerRef.current?.abort(), []);
   const sendMessage = async (content: string): Promise<boolean> => {
     if (conversationId === null || busy.current || historyLoading) return false;
-    busy.current = true; setIsLoading(true); setActivity("智能体正在思考…"); setError("");
+    busy.current = true; setIsLoading(true); setActivity("智能体正在思考…"); setError(""); setLastPrompt(content);
     const id = conversationId, stamp = Date.now(), answerId = -(stamp + 1);
     const controller = new AbortController(); controllerRef.current = controller;
     setRecords(previous => ({ ...previous, [id]: [...(previous[id] ?? []),
@@ -49,12 +50,23 @@ export function useChatMessages(conversationId: number | null) {
       if (!reply.trim()) throw new Error("流已结束，但后端没有发送最终回答 content 事件");
       await loadHistory(id); return true;
     } catch (err) {
-      if (!controller.signal.aborted) setError((err instanceof Error ? err.message : "流式回答中断") + "。请刷新历史记录确认结果后再重发。");
+      if (controller.signal.aborted) {
+        setRecords(previous => ({ ...previous, [id]: (previous[id] ?? []).filter(item => item.id !== answerId || Boolean(item.content)) }));
+      } else {
+        setError((err instanceof Error ? err.message : "流式回答中断") + "。请确认结果后再重新生成。");
+      }
       return false;
     } finally {
       busy.current = false; controllerRef.current = null; setActivity(""); setIsLoading(false);
     }
   };
+  const stopGeneration = () => {
+    if (!controllerRef.current) return;
+    setError("已停止生成，你可以重新生成这条回答。");
+    controllerRef.current.abort();
+  };
+  const retryLastMessage = () => lastPrompt ? sendMessage(lastPrompt) : Promise.resolve(false);
   return { messages: conversationId === null ? [] : records[conversationId] ?? [],
-    isLoading, historyLoading, activity, error, sendMessage };
+    isLoading, historyLoading, activity, error, canRetry: Boolean(lastPrompt) && !isLoading,
+    sendMessage, stopGeneration, retryLastMessage };
 }

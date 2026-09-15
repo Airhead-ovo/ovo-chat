@@ -51,3 +51,13 @@ test("task CRUD handles paginated list and empty DELETE response", async () => {
     ["/api/projects/2/tasks/4", "DELETE", null],
   ]);
 });
+
+test("task list sends status and keyword filters", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/projects/2/tasks?page=1&page_size=10&status=doing&" + new URLSearchParams({ keyword: "接口 联调" }));
+    assert.ok(options.signal instanceof AbortSignal);
+    return Response.json({ items: [], page: 1, page_size: 10, total: 0 });
+  };
+  const controller = new AbortController();
+  await projects.getTasks(2, 1, 10, "doing", "接口 联调", controller.signal);
+});
