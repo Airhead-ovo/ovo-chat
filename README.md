@@ -71,3 +71,22 @@ export default defineConfig([
   },
 ])
 ```
+
+
+
+# 前端修改src代码
+cd ~/airheadovo/ovo-chat
+
+git pull
+
+<!-- docker build -t ovo-chat .
+
+docker rm -f ovo-chat
+
+docker run -d \
+  --name ovo-chat \
+  --network ovo-network \
+  -p 18001:80 \
+  ovo-chat -->
+  
+docker compose up -d --build

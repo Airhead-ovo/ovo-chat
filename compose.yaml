@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build: .
+    container_name: ovo-chat
+    ports:
+      - "18001:80"
+    networks:
+      - ovo-network
+
+networks:
+  ovo-network:
+    external: true
