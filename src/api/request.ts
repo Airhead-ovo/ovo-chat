@@ -1,4 +1,5 @@
 const TOKEN_KEY = "ovo-chat-token";
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL?.replace(/\/$/, "") || "/api";
 export const getToken = () => sessionStorage.getItem(TOKEN_KEY);
 export const setToken = (token: string) => sessionStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => sessionStorage.removeItem(TOKEN_KEY);
@@ -15,9 +16,9 @@ export async function requestResponse(path: string, options: RequestInit = {}): 
   if (token) headers.set("Authorization", `Bearer ${token}`);
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, { ...options, headers });
+    response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
   } catch {
-    throw new Error("无法连接后端，请确认 FastAPI 已在 8000 端口启动");
+    throw new Error(`无法连接后端（${API_BASE_URL}），请检查 API 地址和服务状态`);
   }
   if (!response.ok) {
     const data = await response.json().catch(() => null);

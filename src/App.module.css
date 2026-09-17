@@ -22,16 +22,16 @@
   gap: 8px;
   align-items: center;
   padding: 0 24px;
-  border-bottom: 1px solid #e9edf3;
-  background: #fff;
-  box-shadow: 0 1px 6px rgba(20, 32, 52, .025);
+  border-bottom: 1px solid #e0dace;
+  background: #fbfaf6;
+  box-shadow: 0 1px 6px rgba(32, 29, 24, .035);
 }
 
 .navigation :global(.ant-btn-primary) { box-shadow: none; }
-.navigation :global(.ant-btn-text) { color: #687384; }
+.navigation :global(.ant-btn-text) { color: #726b5e; }
 .navigationSpacer { flex: 1; }
 .navigation :global(.profile-avatar) { transition: transform .15s ease, box-shadow .15s ease; }
-.navigation :global(.profile-avatar:hover) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(23, 104, 221, .18); }
+.navigation :global(.profile-avatar:hover) { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(32, 29, 24, .18); }
 
 .main {
   height: 100%;

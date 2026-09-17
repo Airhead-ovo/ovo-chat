@@ -67,6 +67,7 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
   };
 
   const disabled = listLoading || historyLoading || isLoading;
+  const selectedConversation = conversations.find(item => item.id === selected);
   return <div className={styles.chatPageContainer}>
     <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
       onSelect={setSelected} onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
@@ -79,33 +80,41 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
         onPressEnter={() => void newConversation()} />
       {createError && <Alert type="error" title={createError} style={{ marginTop: 12 }} showIcon />}
     </Modal>
-    {listError && <Alert type="error" title={listError}
-      action={<Button size="small" onClick={() => setRevision(value => value + 1)}>重试</Button>} />}
-    {chatError && <Alert type="warning" title={chatError}
-      action={canRetry && <Button size="small" onClick={() => void retryLastMessage()}>重新生成</Button>} />}
-    <div className={styles.chatBox}>
-      {(listLoading || historyLoading) && <Spin />}
-      {!listLoading && !historyLoading && !messages.length &&
-        <Empty description={selected === null ? "点击新建对话，开始聊天" : "这个会话还没有消息"} />}
-      {messages.map(message => <div key={message.id} className={styles.msgContainer}
-        style={{ justifyContent: message.role === "user" ? "flex-end" : "flex-start", textAlign: "left" }}>
-        <div className={styles.msgWrapper} style={{ maxWidth: "90%" }}>
-          <div className={styles.msgContent} style={{ background: message.role === "user" ? "#f3f3f3" : "#fff" }}>
-            <div className="markdown">
-              {message.content.split(/(<think>[\s\S]*?<\/think>)/g).map((part, index) =>
-                part.startsWith("<think>") ? <details key={index}>
-                  <summary>思考过程</summary><ReactMarkdown remarkPlugins={[remarkGfm]}>{part.slice(7, -8)}</ReactMarkdown>
-                </details> : <ReactMarkdown remarkPlugins={[remarkGfm]} key={index}>{part}</ReactMarkdown>
-              )}
+    <section className={styles.conversationPanel}>
+      <header className={styles.conversationHeader}>
+        <div><strong>{selectedConversation?.title ?? "选择一段对话"}</strong><span>智能体对话</span></div>
+      </header>
+      <div className={styles.alerts}>
+        {listError && <Alert type="error" title={listError}
+          action={<Button size="small" onClick={() => setRevision(value => value + 1)}>重试</Button>} />}
+        {chatError && <Alert type="warning" title={chatError}
+          action={canRetry && <Button size="small" onClick={() => void retryLastMessage()}>重新生成</Button>} />}
+      </div>
+      <div className={styles.chatBox}>
+        {(listLoading || historyLoading) && <Spin className={styles.centerState} />}
+        {!listLoading && !historyLoading && !messages.length &&
+          <Empty className={styles.centerState} description={selected === null ? "在左侧新建一段对话" : "这个会话还没有消息"} />}
+        {messages.map(message => <div key={message.id} className={styles.msgContainer}
+          style={{ justifyContent: message.role === "user" ? "flex-end" : "flex-start", textAlign: "left" }}>
+          <div className={styles.msgWrapper} style={{ maxWidth: "85%" }}>
+            <div className={styles.msgContent} style={{ background: message.role === "user" ? "#efebe1" : "transparent" }}>
+              <div className="markdown">
+                {message.content.split(/(<think>[\s\S]*?<\/think>)/g).map((part, index) =>
+                  part.startsWith("<think>") ? <details key={index}>
+                    <summary>思考过程</summary><ReactMarkdown remarkPlugins={[remarkGfm]}>{part.slice(7, -8)}</ReactMarkdown>
+                  </details> : <ReactMarkdown remarkPlugins={[remarkGfm]} key={index}>{part}</ReactMarkdown>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </div>)}
-      {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}
-        <Button size="small" danger onClick={stopGeneration}>停止生成</Button></div>}
-      <div ref={bottom} />
-    </div>
-    <ChatInput key={selected ?? "empty"} onSend={sendMessage}
-      disabled={selected === null || disabled} />
+        </div>)}
+        {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}
+          <Button size="small" danger onClick={stopGeneration}>停止生成</Button></div>}
+        <div ref={bottom} />
+      </div>
+      <div className={styles.inputArea}>
+        <ChatInput key={selected ?? "empty"} onSend={sendMessage} disabled={selected === null || disabled} />
+      </div>
+    </section>
   </div>;
 }

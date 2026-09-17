@@ -75,9 +75,9 @@ test("backend errors are surfaced, not parsed as SSE", async () => {
   globalThis.fetch = async () => Response.json({ detail: "模型暂时无法回答" }, { status: 502 });
   await assert.rejects(chat.sendMessageRequest(3, "hello"), /模型暂时无法回答/);
 });
-test("network errors explain backend availability", async () => {
+test("network errors explain configured backend availability", async () => {
   globalThis.fetch = async () => { throw new TypeError("fetch failed"); };
-  await assert.rejects(chat.createConversation("test"), /8000/);
+  await assert.rejects(chat.createConversation("test"), /API 地址和服务状态/);
 });
 
 test("avatar upload uses multipart form data without a JSON content type", async () => {

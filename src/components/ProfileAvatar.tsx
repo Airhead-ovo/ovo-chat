@@ -56,7 +56,7 @@ export default function ProfileAvatar() {
     <Tooltip title={user ? `${user.email} · 点击更换头像` : "点击上传头像"}>
       <Upload accept="image/png,image/jpeg" showUploadList={false} beforeUpload={beforeUpload}
         customRequest={customRequest} disabled={uploading}>
-        <Avatar src={source} className="profile-avatar" style={{ cursor: uploading ? "wait" : "pointer", background: "#dce8fb", color: "#1768dd" }}>
+        <Avatar src={source} className="profile-avatar" style={{ cursor: uploading ? "wait" : "pointer", background: "#efebe1", color: "#201d18" }}>
           {user?.email.slice(0, 1).toUpperCase() ?? "U"}
         </Avatar>
       </Upload>
