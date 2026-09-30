@@ -89,4 +89,5 @@ docker run -d \
   -p 18001:80 \
   ovo-chat -->
   
+docker rm -f ovo-chat
 docker compose up -d --build
