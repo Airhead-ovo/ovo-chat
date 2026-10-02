@@ -10,6 +10,10 @@ export const login = (email: string, password: string) =>
   });
 export const createConversation = (title: string) =>
   request<Conversation>(`/conversations?title=${encodeURIComponent(title)}`, { method: "POST" });
+export const updateConversation = (id: number, title: string) =>
+  request<Conversation>(`/conversations/${id}`, {
+    method: "PATCH", body: JSON.stringify({ title }),
+  });
 export const getConversations = (signal?: AbortSignal) =>
   request<Conversation[]>("/conversations", { signal });
 export const getConversationMessages = (id: number, signal?: AbortSignal) =>

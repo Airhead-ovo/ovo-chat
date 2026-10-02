@@ -42,6 +42,17 @@ test("create conversation uses title query and login token", async () => {
   };
   assert.equal((await chat.createConversation("新对话 & test")).id, 3);
 });
+test("rename conversation uses PATCH with a title body", async () => {
+  api.setToken("login-token");
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/conversations/3");
+    assert.equal(options.method, "PATCH");
+    assert.equal(options.headers.get("Authorization"), "Bearer login-token");
+    assert.deepEqual(JSON.parse(options.body), { title: "新的会话名称" });
+    return Response.json({ id: 3, title: "新的会话名称", user_id: 1 });
+  };
+  assert.equal((await chat.updateConversation(3, "新的会话名称")).title, "新的会话名称");
+});
 test("conversation list and history use authenticated GET endpoints", async () => {
   api.setToken("login-token");
   globalThis.fetch = async (url, options) => {

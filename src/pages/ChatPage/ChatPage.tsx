@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatHeader from "@/components/chat/ChatHeader";
 import ChatInput from "@/components/chat/ChatInput";
-import { createConversation, getConversations, type Conversation } from "@/api/chat";
+import { createConversation, getConversations, updateConversation, type Conversation } from "@/api/chat";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import "@/assets/styles/markdown.css";
 import styles from "./ChatPage.module.css";
@@ -18,6 +18,10 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [createError, setCreateError] = useState("");
+  const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
+  const [renameTitle, setRenameTitle] = useState("");
+  const [renameError, setRenameError] = useState("");
+  const [renaming, setRenaming] = useState(false);
   const { messages, isLoading, historyLoading, activity, error: chatError, canRetry,
     sendMessage, stopGeneration, retryLastMessage } = useChatMessages(selected);
   const bottom = useRef<HTMLDivElement>(null);
@@ -66,11 +70,34 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const openRename = (conversation: Conversation) => {
+    setRenameTarget(conversation);
+    setRenameTitle(conversation.title);
+    setRenameError("");
+  };
+
+  const renameConversation = async () => {
+    const title = renameTitle.trim();
+    if (!renameTarget || !title || renaming) return;
+    setRenaming(true);
+    setRenameError("");
+    try {
+      const updated = await updateConversation(renameTarget.id, title);
+      setConversations(items => items.map(item => item.id === updated.id ? updated : item));
+      setRenameTarget(null);
+    } catch (error) {
+      setRenameError(error instanceof Error ? error.message : "重命名失败");
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   const disabled = listLoading || historyLoading || isLoading;
   const selectedConversation = conversations.find(item => item.id === selected);
   return <div className={styles.chatPageContainer}>
     <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
-      onSelect={setSelected} onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
+      onSelect={setSelected} onRename={openRename}
+      onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
     <Modal title="新建对话" open={newDialogOpen} onCancel={() => { if (!creating.current) setNewDialogOpen(false); }}
       onOk={() => void newConversation()} okText="创建" okButtonProps={{ disabled: !newTitle.trim(), loading: creating.current }}
       cancelButtonProps={{ disabled: creating.current }} destroyOnHidden>
@@ -79,6 +106,15 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
         value={newTitle} onChange={event => { setNewTitle(event.target.value); setCreateError(""); }}
         onPressEnter={() => void newConversation()} />
       {createError && <Alert type="error" title={createError} style={{ marginTop: 12 }} showIcon />}
+    </Modal>
+    <Modal title="重命名对话" open={renameTarget !== null} onCancel={() => { if (!renaming) setRenameTarget(null); }}
+      onOk={() => void renameConversation()} okText="保存"
+      okButtonProps={{ disabled: !renameTitle.trim() || renameTitle.trim() === renameTarget?.title, loading: renaming }}
+      cancelButtonProps={{ disabled: renaming }} destroyOnHidden>
+      <Input autoFocus aria-label="新的对话名称" maxLength={100} value={renameTitle}
+        onChange={event => { setRenameTitle(event.target.value); setRenameError(""); }}
+        onPressEnter={() => void renameConversation()} />
+      {renameError && <Alert type="error" title={renameError} style={{ marginTop: 12 }} showIcon />}
     </Modal>
     <section className={styles.conversationPanel}>
       <header className={styles.conversationHeader}>
