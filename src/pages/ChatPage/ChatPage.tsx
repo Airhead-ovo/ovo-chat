@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatHeader from "@/components/chat/ChatHeader";
 import ChatInput from "@/components/chat/ChatInput";
-import { createConversation, deleteConversation, getConversations, updateConversation, type Conversation } from "@/api/chat";
+import { createConversation, deleteConversation, getConversations, updateConversation, updateConversationPinned, type Conversation } from "@/api/chat";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import "@/assets/styles/markdown.css";
 import styles from "./ChatPage.module.css";
@@ -22,6 +22,7 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
   const [renameTitle, setRenameTitle] = useState("");
   const [renameError, setRenameError] = useState("");
   const [renaming, setRenaming] = useState(false);
+  const [pinningId, setPinningId] = useState<number | null>(null);
   const { messages, isLoading, historyLoading, activity, error: chatError, canRetry,
     sendMessage, stopGeneration, retryLastMessage } = useChatMessages(selected);
   const bottom = useRef<HTMLDivElement>(null);
@@ -104,12 +105,27 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const togglePinned = async (conversation: Conversation) => {
+    if (pinningId !== null) return;
+    setPinningId(conversation.id);
+    setListError("");
+    try {
+      const updated = await updateConversationPinned(conversation.id, !conversation.pinned_at);
+      setConversations(items => items.map(item => item.id === updated.id ? updated : item));
+    } catch (error) {
+      setListError(error instanceof Error ? error.message : "更新置顶状态失败");
+    } finally {
+      setPinningId(null);
+    }
+  };
+
   const disabled = listLoading || historyLoading || isLoading;
   const selectedConversation = conversations.find(item => item.id === selected);
   return <div className={styles.chatPageContainer}>
     <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
       onSelect={setSelected} onRename={openRename}
       onDelete={conversation => void removeConversation(conversation)}
+      onPin={conversation => void togglePinned(conversation)} pinningId={pinningId}
       onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
     <Modal title="新建对话" open={newDialogOpen} onCancel={() => { if (!creating.current) setNewDialogOpen(false); }}
       onOk={() => void newConversation()} okText="创建" okButtonProps={{ disabled: !newTitle.trim(), loading: creating.current }}

@@ -1,6 +1,6 @@
 import { request, requestResponse } from "./request";
 import { readSSE, type SSEMessage } from "../utils/sse";
-export type Conversation = { id: number; title: string; user_id: number };
+export type Conversation = { id: number; title: string; user_id: number; pinned_at: string | null };
 export type ChatMessage = {
   id: number; role: string; content: string; conversation_id: number;
 };
@@ -16,6 +16,10 @@ export const updateConversation = (id: number, title: string) =>
   });
 export const deleteConversation = (id: number) =>
   requestResponse(`/conversations/${id}`, { method: "DELETE" });
+export const updateConversationPinned = (id: number, isPinned: boolean) =>
+  request<Conversation>(`/conversations/${id}/pinned`, {
+    method: "PATCH", body: JSON.stringify({ is_pinned: isPinned }),
+  });
 export const getConversations = (signal?: AbortSignal) =>
   request<Conversation[]>("/conversations", { signal });
 export const getConversationMessages = (id: number, signal?: AbortSignal) =>

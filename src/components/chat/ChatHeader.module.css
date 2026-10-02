@@ -4,17 +4,17 @@
 .subtitle { margin-top: 2px; color: #9a9284; font-size: 12px; }
 .newButton { width: 100%; height: 38px; margin-top: 14px; box-shadow: none; }
 .list { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 8px 14px; }
+.group + .group { margin-top: 14px; }
+.groupTitle { padding: 5px 10px; color: #9a9284; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .conversationRow { width: 100%; min-width: 0; display: flex; align-items: center; margin: 2px 0; border-radius: 8px; transition: background .15s ease; }
 .conversationRow:hover { background: #ebe6dc; }
 .conversation { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 5px 10px 11px; border: 0; background: transparent; color: #4a453c; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .conversation:disabled { cursor: default; opacity: .55; }
 .active, .active:hover { background: #e4ddd1; color: #201d18; }
-.actions { flex: 0 0 auto; display: flex; margin-right: 3px; opacity: 0; transition: opacity .15s ease; }
-.conversationRow:hover .actions, .actions:focus-within { opacity: 1; }
-.actionButton { width: 26px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #9a9284; cursor: pointer; transition: background .15s ease, color .15s ease; }
-.actionButton:hover:not(:disabled) { color: #201d18; background: #dcd4c7; }
-.actionButton:disabled { cursor: default; }
-.deleteButton:hover:not(:disabled) { color: #b42318; background: #f6e7e2; }
+.pinMarker { flex: 0 0 auto; color: #726b5e; font-size: 9px; transform: rotate(45deg); }
+.moreButton { flex: 0 0 34px; width: 34px; height: 30px; margin-right: 4px; padding: 0 0 5px; border: 0; border-radius: 7px; background: transparent; color: #726b5e; font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer; opacity: 0; transition: opacity .15s ease, background .15s ease; }
+.conversationRow:hover .moreButton, .moreButton:focus-visible, .moreButton[aria-expanded="true"] { opacity: 1; }
+.moreButton:hover { background: #dcd4c7; color: #201d18; }
 .chatIcon { flex: 0 0 auto; color: #726b5e; font-size: 16px; }
 .conversationTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .footer { flex: 0 0 auto; padding: 10px 8px 14px; border-top: 1px solid #e0dace; }

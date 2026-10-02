@@ -62,6 +62,15 @@ test("delete conversation accepts an empty 204 response", async () => {
   const response = await chat.deleteConversation(3);
   assert.equal(response.status, 204);
 });
+test("pin conversation uses the dedicated PATCH endpoint", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/conversations/3/pinned");
+    assert.equal(options.method, "PATCH");
+    assert.deepEqual(JSON.parse(options.body), { is_pinned: true });
+    return Response.json({ id: 3, title: "置顶会话", user_id: 1, pinned_at: "2026-10-02T12:00:00" });
+  };
+  assert.ok((await chat.updateConversationPinned(3, true)).pinned_at);
+});
 test("conversation list and history use authenticated GET endpoints", async () => {
   api.setToken("login-token");
   globalThis.fetch = async (url, options) => {
