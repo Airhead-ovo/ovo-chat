@@ -24,6 +24,10 @@ export const getConversations = (signal?: AbortSignal) =>
   request<Conversation[]>("/conversations", { signal });
 export const getConversationMessages = (id: number, signal?: AbortSignal) =>
   request<ChatMessage[]>(`/conversations/${id}/messages`, { signal });
+export const updateMessageRequest = (conversationId: number, messageId: number, content: string) =>
+  requestResponse(`/conversations/${conversationId}/messages/${messageId}`, {
+    method: "PATCH", body: JSON.stringify({ content }),
+  });
 export const sendMessageRequest = (id: number, content: string, signal?: AbortSignal) =>
   request<ChatMessage>(`/conversations/${id}/messages`, {
     method: "POST", body: JSON.stringify({ content }), signal,

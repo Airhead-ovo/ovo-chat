@@ -84,6 +84,15 @@ test("conversation list and history use authenticated GET endpoints", async () =
   assert.equal((await chat.getConversations())[0].title, "previous");
   assert.equal((await chat.getConversationMessages(3))[0].content, "hello");
 });
+test("edit user message uses the nested PATCH endpoint", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/conversations/3/messages/8");
+    assert.equal(options.method, "PATCH");
+    assert.deepEqual(JSON.parse(options.body), { content: "修改后的问题" });
+    return new Response(null, { status: 204 });
+  };
+  assert.equal((await chat.updateMessageRequest(3, 8, "修改后的问题")).status, 204);
+});
 test("send uses conversation endpoint and non-streaming content", async () => {
   globalThis.fetch = async (url, options) => {
     assert.equal(url, "/api/conversations/3/messages");

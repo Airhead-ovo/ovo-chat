@@ -10,6 +10,9 @@
 .msgContainer { display: flex; width: 100%; }
 .msgWrapper { display: flex; flex-direction: column; color: #3a362e; font-size: 14px; line-height: 1.65; }
 .msgContent { padding: 9px 14px; border-radius: 18px; }
+.editMessageButton { align-self: flex-end; margin: 3px 8px 0 0; padding: 2px 5px; border: 0; background: transparent; color: #9a9284; font-size: 11px; cursor: pointer; opacity: 0; transition: opacity .15s ease, color .15s ease; }
+.msgWrapper:hover .editMessageButton, .editMessageButton:focus-visible { opacity: 1; }
+.editMessageButton:hover { color: #201d18; }
 .loadingState { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid #e0dace; border-radius: 12px; background: #fbfaf6; color: #726b5e; font-size: 12px; line-height: 1; }
 .inputArea { flex: 0 0 auto; width: min(100%, 800px); margin: 0 auto; padding: 0 18px 14px; box-sizing: border-box; background: #fbfaf6; }
 .inputArea > div { padding: 10px 12px !important; border: 1px solid #d4cbbb; border-radius: 16px; background: #fff; box-shadow: 0 4px 18px rgba(32, 29, 24, .07); }

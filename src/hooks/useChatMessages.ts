@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getConversationMessages, streamMessageRequest, type ChatMessage } from "@/api/chat";
+import { getConversationMessages, streamMessageRequest, updateMessageRequest, type ChatMessage } from "@/api/chat";
 import type { SSEMessage } from "@/utils/sse";
 export function useChatMessages(conversationId: number | null) {
   const [records, setRecords] = useState<Record<number, ChatMessage[]>>({});
@@ -8,6 +8,7 @@ export function useChatMessages(conversationId: number | null) {
   const [activity, setActivity] = useState("");
   const [error, setError] = useState("");
   const [lastPrompt, setLastPrompt] = useState("");
+  const [messageUpdating, setMessageUpdating] = useState(false);
   const busy = useRef(false), controllerRef = useRef<AbortController | null>(null);
   const loadHistory = async (id: number, signal?: AbortSignal) => {
     const messages = await getConversationMessages(id, signal);
@@ -66,7 +67,22 @@ export function useChatMessages(conversationId: number | null) {
     controllerRef.current.abort();
   };
   const retryLastMessage = () => lastPrompt ? sendMessage(lastPrompt) : Promise.resolve(false);
+  const editMessage = async (message: ChatMessage, content: string) => {
+    if (busy.current || messageUpdating || message.id < 1 || message.role !== "user") return false;
+    setMessageUpdating(true);
+    setError("");
+    try {
+      await updateMessageRequest(message.conversation_id, message.id, content);
+      await loadHistory(message.conversation_id);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "编辑消息失败");
+      return false;
+    } finally {
+      setMessageUpdating(false);
+    }
+  };
   return { messages: conversationId === null ? [] : records[conversationId] ?? [],
-    isLoading, historyLoading, activity, error, canRetry: Boolean(lastPrompt) && !isLoading,
-    sendMessage, stopGeneration, retryLastMessage };
+    isLoading, historyLoading, messageUpdating, activity, error, canRetry: Boolean(lastPrompt) && !isLoading,
+    sendMessage, stopGeneration, retryLastMessage, editMessage };
 }

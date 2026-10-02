@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatHeader from "@/components/chat/ChatHeader";
 import ChatInput from "@/components/chat/ChatInput";
-import { createConversation, deleteConversation, getConversations, updateConversation, updateConversationPinned, type Conversation } from "@/api/chat";
+import { createConversation, deleteConversation, getConversations, updateConversation, updateConversationPinned, type ChatMessage, type Conversation } from "@/api/chat";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import "@/assets/styles/markdown.css";
 import styles from "./ChatPage.module.css";
@@ -23,8 +23,10 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
   const [renameError, setRenameError] = useState("");
   const [renaming, setRenaming] = useState(false);
   const [pinningId, setPinningId] = useState<number | null>(null);
-  const { messages, isLoading, historyLoading, activity, error: chatError, canRetry,
-    sendMessage, stopGeneration, retryLastMessage } = useChatMessages(selected);
+  const [editTarget, setEditTarget] = useState<ChatMessage | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const { messages, isLoading, historyLoading, messageUpdating, activity, error: chatError, canRetry,
+    sendMessage, stopGeneration, retryLastMessage, editMessage } = useChatMessages(selected);
   const bottom = useRef<HTMLDivElement>(null);
   const creating = useRef(false);
 
@@ -119,7 +121,16 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
     }
   };
 
-  const disabled = listLoading || historyLoading || isLoading;
+  const saveEditedMessage = async () => {
+    const content = editContent.trim();
+    if (!editTarget || !content) return;
+    if (await editMessage(editTarget, content)) {
+      setEditTarget(null);
+      await sendMessage(content);
+    }
+  };
+
+  const disabled = listLoading || historyLoading || isLoading || messageUpdating;
   const selectedConversation = conversations.find(item => item.id === selected);
   return <div className={styles.chatPageContainer}>
     <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
@@ -144,6 +155,14 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
         onChange={event => { setRenameTitle(event.target.value); setRenameError(""); }}
         onPressEnter={() => void renameConversation()} />
       {renameError && <Alert type="error" title={renameError} style={{ marginTop: 12 }} showIcon />}
+    </Modal>
+    <Modal title="编辑消息" open={editTarget !== null} onCancel={() => { if (!messageUpdating) setEditTarget(null); }}
+      onOk={() => void saveEditedMessage()} okText="保存修改"
+      okButtonProps={{ disabled: !editContent.trim() || editContent.trim() === editTarget?.content, loading: messageUpdating }}
+      cancelButtonProps={{ disabled: messageUpdating }} destroyOnHidden>
+      <Alert type="warning" title="保存后，这条消息及之后的内容会被删除，并根据修改后的内容重新生成回答。" showIcon style={{ marginBottom: 14 }} />
+      <Input.TextArea autoFocus aria-label="编辑消息内容" rows={5} maxLength={20000} value={editContent}
+        onChange={event => setEditContent(event.target.value)} />
     </Modal>
     <section className={styles.conversationPanel}>
       <header className={styles.conversationHeader}>
@@ -171,6 +190,8 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
                 )}
               </div>
             </div>
+            {message.role === "user" && message.id > 0 && !isLoading && <button type="button" className={styles.editMessageButton}
+              onClick={() => { setEditTarget(message); setEditContent(message.content); }}>编辑</button>}
           </div>
         </div>)}
         {isLoading && <div className={styles.loadingState}><Spin size="small" /> {activity || "正在接收回答…"}
