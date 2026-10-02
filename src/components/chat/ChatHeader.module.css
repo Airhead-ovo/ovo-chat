@@ -9,10 +9,12 @@
 .conversation { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 5px 10px 11px; border: 0; background: transparent; color: #4a453c; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .conversation:disabled { cursor: default; opacity: .55; }
 .active, .active:hover { background: #e4ddd1; color: #201d18; }
-.renameButton { flex: 0 0 30px; width: 30px; height: 30px; margin-right: 4px; border: 0; border-radius: 6px; background: transparent; color: #9a9284; cursor: pointer; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; }
-.conversationRow:hover .renameButton, .renameButton:focus-visible { opacity: 1; }
-.renameButton:hover:not(:disabled) { color: #201d18; background: #dcd4c7; }
-.renameButton:disabled { cursor: default; }
+.actions { flex: 0 0 auto; display: flex; margin-right: 3px; opacity: 0; transition: opacity .15s ease; }
+.conversationRow:hover .actions, .actions:focus-within { opacity: 1; }
+.actionButton { width: 26px; height: 30px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #9a9284; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.actionButton:hover:not(:disabled) { color: #201d18; background: #dcd4c7; }
+.actionButton:disabled { cursor: default; }
+.deleteButton:hover:not(:disabled) { color: #b42318; background: #f6e7e2; }
 .chatIcon { flex: 0 0 auto; color: #726b5e; font-size: 16px; }
 .conversationTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .footer { flex: 0 0 auto; padding: 10px 8px 14px; border-top: 1px solid #e0dace; }

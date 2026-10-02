@@ -53,6 +53,15 @@ test("rename conversation uses PATCH with a title body", async () => {
   };
   assert.equal((await chat.updateConversation(3, "新的会话名称")).title, "新的会话名称");
 });
+test("delete conversation accepts an empty 204 response", async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, "/api/conversations/3");
+    assert.equal(options.method, "DELETE");
+    return new Response(null, { status: 204 });
+  };
+  const response = await chat.deleteConversation(3);
+  assert.equal(response.status, 204);
+});
 test("conversation list and history use authenticated GET endpoints", async () => {
   api.setToken("login-token");
   globalThis.fetch = async (url, options) => {

@@ -1,10 +1,11 @@
-import { Button, Empty } from "antd";
+import { Button, Empty, Popconfirm } from "antd";
 import type { Conversation } from "@/api/chat";
 import styles from "./ChatHeader.module.css";
 
 type Props = {
   conversations: Conversation[]; selected: number | null; disabled: boolean;
   onSelect: (id: number) => void; onRename: (conversation: Conversation) => void;
+  onDelete: (conversation: Conversation) => void;
   onNew: () => void; onLogout: () => void;
 };
 
@@ -23,8 +24,16 @@ export default function ChatHeader(props: Props) {
           onClick={() => props.onSelect(item.id)} title={item.title}>
           <span className={styles.chatIcon}>◇</span><span className={styles.conversationTitle}>{item.title}</span>
         </button>
-        <button type="button" className={styles.renameButton} disabled={props.disabled}
-          aria-label={`重命名 ${item.title}`} title="重命名" onClick={() => props.onRename(item)}>✎</button>
+        <div className={styles.actions}>
+          <button type="button" className={styles.actionButton} disabled={props.disabled}
+            aria-label={`重命名 ${item.title}`} title="重命名" onClick={() => props.onRename(item)}>✎</button>
+          <Popconfirm title="删除这段对话？" description="该对话中的消息也会被删除。"
+            okText="删除" cancelText="取消" okButtonProps={{ danger: true }}
+            onConfirm={() => props.onDelete(item)}>
+            <button type="button" className={`${styles.actionButton} ${styles.deleteButton}`} disabled={props.disabled}
+              aria-label={`删除 ${item.title}`} title="删除">×</button>
+          </Popconfirm>
+        </div>
       </div>)}
     </div>
     <div className={styles.footer}><Button type="text" block onClick={props.onLogout} disabled={props.disabled}>退出登录</Button></div>

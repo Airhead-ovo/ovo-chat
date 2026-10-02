@@ -14,6 +14,8 @@ export const updateConversation = (id: number, title: string) =>
   request<Conversation>(`/conversations/${id}`, {
     method: "PATCH", body: JSON.stringify({ title }),
   });
+export const deleteConversation = (id: number) =>
+  requestResponse(`/conversations/${id}`, { method: "DELETE" });
 export const getConversations = (signal?: AbortSignal) =>
   request<Conversation[]>("/conversations", { signal });
 export const getConversationMessages = (id: number, signal?: AbortSignal) =>

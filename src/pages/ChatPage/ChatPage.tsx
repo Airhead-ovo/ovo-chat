@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatHeader from "@/components/chat/ChatHeader";
 import ChatInput from "@/components/chat/ChatInput";
-import { createConversation, getConversations, updateConversation, type Conversation } from "@/api/chat";
+import { createConversation, deleteConversation, getConversations, updateConversation, type Conversation } from "@/api/chat";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import "@/assets/styles/markdown.css";
 import styles from "./ChatPage.module.css";
@@ -92,11 +92,24 @@ export default function ChatPage({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  const removeConversation = async (conversation: Conversation) => {
+    setListError("");
+    try {
+      await deleteConversation(conversation.id);
+      const remaining = conversations.filter(item => item.id !== conversation.id);
+      setConversations(remaining);
+      if (selected === conversation.id) setSelected(remaining[0]?.id ?? null);
+    } catch (error) {
+      setListError(error instanceof Error ? error.message : "删除会话失败");
+    }
+  };
+
   const disabled = listLoading || historyLoading || isLoading;
   const selectedConversation = conversations.find(item => item.id === selected);
   return <div className={styles.chatPageContainer}>
     <ChatHeader conversations={conversations} selected={selected} disabled={disabled}
       onSelect={setSelected} onRename={openRename}
+      onDelete={conversation => void removeConversation(conversation)}
       onNew={() => { setNewTitle(""); setCreateError(""); setNewDialogOpen(true); }} onLogout={onLogout} />
     <Modal title="新建对话" open={newDialogOpen} onCancel={() => { if (!creating.current) setNewDialogOpen(false); }}
       onOk={() => void newConversation()} okText="创建" okButtonProps={{ disabled: !newTitle.trim(), loading: creating.current }}
